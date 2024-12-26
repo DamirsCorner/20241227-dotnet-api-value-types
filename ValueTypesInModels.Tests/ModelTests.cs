@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Json;
+﻿using System.Net;
+using System.Net.Http.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 
@@ -21,20 +22,16 @@ public class ModelTests
     }
 
     [Test]
-    public async Task NoErrorForMissingRequiredField()
+    public async Task ErrorForMissingRequiredField()
     {
         using var httpClient = factory.CreateClient();
         var response = await httpClient.PostAsJsonAsync("/Sample", new { Optional = "Green" });
 
-        response.Should().BeSuccessful();
-        response
-            .Content.ReadAsStringAsync()
-            .Result.Should()
-            .Be("""{"required":"Red","optional":"Green"}""");
+        response.Should().HaveStatusCode(HttpStatusCode.BadRequest);
     }
 
     [Test]
-    public async Task MissingOptionalFieldFallsBackToDefault()
+    public async Task MissingOptionalFieldHasNoValue()
     {
         using var httpClient = factory.CreateClient();
         var response = await httpClient.PostAsJsonAsync("/Sample", new { Required = "Green" });
@@ -43,6 +40,6 @@ public class ModelTests
         response
             .Content.ReadAsStringAsync()
             .Result.Should()
-            .Be("""{"required":"Green","optional":"Red"}""");
+            .Be("""{"required":"Green","optional":null}""");
     }
 }
